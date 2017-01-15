@@ -1,0 +1,34 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'S3 Bucket with SNS/SQS Notifications'
+
+Resources:
+  SNSTopic:
+    Type: AWS::SNS::Topic
+
+  SNSTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal: { AWS: "*" }
+          Action: [ "SNS:Publish" ]
+          Resource: !Ref SNSTopic
+      Topics:
+      - !Ref SNSTopic
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn: SNSTopicPolicy
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      NotificationConfiguration:
+        TopicConfigurations:
+        - Topic: !Ref SNSTopic
+          Event: "s3:ObjectCreated:*"
+
+Outputs:
+  BucketName:
+    Value: !Ref 'S3Bucket'
+    Description: Name S3 bucket
